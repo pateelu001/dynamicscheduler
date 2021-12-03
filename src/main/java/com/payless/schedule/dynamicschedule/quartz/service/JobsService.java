@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jdk.internal.org.jline.utils.Log;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,23 +34,24 @@ public class JobsService {
 
 	@Autowired
 	Scheduler scheduler;
-	
+
 	public JobDescriptor createJob(String group, JobDescriptor descriptor) {
 		descriptor.setGroupName(group);
 		JobDetail jobDetail = descriptor.buildJobDetail();
-		Set<Trigger> triggersForJob = descriptor.buildTriggers(); 
-		 // there will only be one always
+		Set<Trigger> triggersForJob = descriptor.buildTriggers();
+		// there will only be one always
 		log.info("About to save job with key - {}", jobDetail.getKey());
 		try {
 			scheduler.scheduleJob(jobDetail, triggersForJob.iterator().next());
 			log.info("Job with key - {} saved sucessfully", jobDetail.getKey());
 		} catch (SchedulerException e) {
-			log.error("Could not save job with key - {} due to error - {}", jobDetail.getKey(), e.getLocalizedMessage());
+			log.error("Could not save job with key - {} due to error - {}", jobDetail.getKey(),
+					e.getLocalizedMessage());
 			throw new IllegalArgumentException(e.getLocalizedMessage());
 		}
 		return descriptor;
 	}
-	
+
 	@Transactional(readOnly = true)
 	public Optional<JobDescriptor> findJob(String group, String name) {
 		// @formatter:off
@@ -102,11 +102,11 @@ public class JobsService {
 		// @formatter:on
 		return jobsList;
 	}
-	
+
 	public void updateJob(String group, String name, JobDescriptor descriptor) {
 		try {
 			JobDetail oldJobDetail = scheduler.getJobDetail(jobKey(name, group));
-			if(Objects.nonNull(oldJobDetail)) {
+			if (Objects.nonNull(oldJobDetail)) {
 				JobDataMap jobDataMap = oldJobDetail.getJobDataMap();
 				jobDataMap.put("timeZoneLong", descriptor.getTimeZoneLong());
 				JobBuilder jb = oldJobDetail.getJobBuilder();
@@ -117,10 +117,11 @@ public class JobsService {
 			}
 			log.warn("Could not find job with key - {}.{} to update", group, name);
 		} catch (SchedulerException e) {
-			log.error("Could not find job with key - {}.{} to update due to error - {}", group, name, e.getLocalizedMessage());
+			log.error("Could not find job with key - {}.{} to update due to error - {}", group, name,
+					e.getLocalizedMessage());
 		}
 	}
-	
+
 	public void deleteJob(String group, String name) {
 		try {
 			scheduler.deleteJob(jobKey(name, group));
@@ -129,7 +130,7 @@ public class JobsService {
 			log.error("Could not delete job with key - {}.{} due to error - {}", group, name, e.getLocalizedMessage());
 		}
 	}
-	
+
 	public void pauseJob(String group, String name) {
 		try {
 			scheduler.pauseJob(jobKey(name, group));
@@ -138,7 +139,7 @@ public class JobsService {
 			log.error("Could not pause job with key - {}.{} due to error - {}", group, name, e.getLocalizedMessage());
 		}
 	}
-	
+
 	public void resumeJob(String group, String name) {
 		try {
 			scheduler.resumeJob(jobKey(name, group));
